@@ -11,6 +11,11 @@ const WATER_MESH_LOW := preload('res://assets/water/clipmap_low.obj')
 
 enum MeshQuality { LOW, HIGH, VERY_HIGH }
 
+@export var simulate : bool = true:
+	set(value):
+		simulate = value
+		if spray_emitter != null: spray_emitter.emitting = simulate
+
 @export_group('Wave Parameters')
 @export_color_no_alpha var water_color : Color = Color(0.1, 0.15, 0.18) :
 	set(value): water_color = value; RenderingServer.global_shader_parameter_set(&'water_color', water_color.srgb_to_linear())
@@ -69,6 +74,9 @@ var next_update_time := 0.0
 var displacement_maps := Texture2DArrayRD.new()
 var normal_maps := Texture2DArrayRD.new()
 
+@onready var spray_emitter := $WaterSprayEmitter
+
+
 func _init() -> void:
 	rng.set_seed(1234) # This seed gives big waves!
 
@@ -77,13 +85,14 @@ func _ready() -> void:
 	RenderingServer.global_shader_parameter_set(&'foam_color', foam_color.srgb_to_linear())
 
 func _process(delta : float) -> void:
-	# Update waves once every 1.0/updates_per_second.
-	if updates_per_second == 0 or time >= next_update_time:
-		var target_update_delta := 1.0 / (updates_per_second + 1e-10)
-		var update_delta := delta if updates_per_second == 0 else target_update_delta + (time - next_update_time)
-		next_update_time = time + target_update_delta
-		_update_water(update_delta)
-	time += delta
+	if simulate:
+		# Update waves once every 1.0/updates_per_second.
+		if updates_per_second == 0 or time >= next_update_time:
+			var target_update_delta := 1.0 / (updates_per_second + 1e-10)
+			var update_delta := delta if updates_per_second == 0 else target_update_delta + (time - next_update_time)
+			next_update_time = time + target_update_delta
+			_update_water(update_delta)
+		time += delta
 
 func _setup_wave_generator() -> void:
 	if parameters.size() <= 0: return
