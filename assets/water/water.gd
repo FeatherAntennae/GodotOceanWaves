@@ -5,10 +5,11 @@ extends MeshInstance3D
 
 const WATER_MAT := preload('res://assets/water/mat_water.tres')
 const SPRAY_MAT := preload('res://assets/water/mat_spray.tres')
+const WATER_MESH_VERY_HIGH := preload("res://assets/water/clipmap_very_high.tres")
 const WATER_MESH_HIGH := preload('res://assets/water/clipmap_high.obj')
 const WATER_MESH_LOW := preload('res://assets/water/clipmap_low.obj')
 
-enum MeshQuality { LOW, HIGH }
+enum MeshQuality { LOW, HIGH, VERY_HIGH }
 
 @export_group('Wave Parameters')
 @export_color_no_alpha var water_color : Color = Color(0.1, 0.15, 0.18) :
@@ -40,15 +41,18 @@ enum MeshQuality { LOW, HIGH }
 		map_size = value
 		_setup_wave_generator()
 
-@export var mesh_quality := MeshQuality.HIGH :
+@export var mesh_quality := MeshQuality.VERY_HIGH :
 	set(value):
 		mesh_quality = value
-		mesh = WATER_MESH_HIGH if mesh_quality == MeshQuality.HIGH else WATER_MESH_LOW
+		match mesh_quality:
+			MeshQuality.LOW: mesh = WATER_MESH_LOW
+			MeshQuality.HIGH: mesh = WATER_MESH_HIGH
+			MeshQuality.VERY_HIGH: mesh = WATER_MESH_VERY_HIGH
 
 ## How many times the wave simulation should update per second.
 ## Note: This doesn't reduce the frame stutter caused by FFT calculation, only
 ##       minimizes GPU time taken by it!
-@export_range(0, 60) var updates_per_second := 50.0 :
+@export_range(0, 60) var updates_per_second := 60.0 :
 	set(value):
 		next_update_time = next_update_time - (1.0/(updates_per_second + 1e-10) - 1.0/(value + 1e-10))
 		updates_per_second = value
